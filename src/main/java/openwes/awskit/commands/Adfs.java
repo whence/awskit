@@ -3,7 +3,9 @@ package openwes.awskit.commands;
 import com.amazonaws.services.securitytoken.model.Credentials;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import openwes.awskit.adfs.AssumeRoleLogin;
 import openwes.awskit.adfs.AwsCredentialsConfig;
+import openwes.awskit.adfs.AwsProfileUtils;
 import openwes.awskit.adfs.Login;
 import openwes.awskit.adfs.SamlFetcher;
 import openwes.awskit.adfs.SamlResponse;
@@ -31,8 +33,56 @@ public class Adfs implements Runnable {
     @Parameter(names = "--profile", description = "AWS Profile to put into credentials file")
     private String profile = "default";
 
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getRoleArn() {
+        return roleArn;
+    }
+
+    public void setRoleArn(String roleArn) {
+        this.roleArn = roleArn;
+    }
+
+    public String getPrincipalArn() {
+        return principalArn;
+    }
+
+    public void setPrincipalArn(String principalArn) {
+        this.principalArn = principalArn;
+    }
+
+    public String getProfile() {
+        return profile;
+    }
+
+    public void setProfile(String profile) {
+        this.profile = profile;
+    }
+
     public void run() {
-        if (Login.isExpired(profile)) {
+        if (AwsProfileUtils.isExpired(profile)) {
             System.out.print("Fetching SAML...");
             String html;
             try {
@@ -49,7 +99,8 @@ public class Adfs implements Runnable {
                 System.out.println("Done");
 
                 System.out.print("Obtaining Credentials...");
-                Credentials credentials = Login.login(roleArn, principalArn, response.getAssertion());
+                Login login = new AssumeRoleLogin();
+                Credentials credentials = login.login(roleArn, principalArn, response.getAssertion());
                 System.out.println("Done");
 
                 System.out.print("Updating credentials file...");

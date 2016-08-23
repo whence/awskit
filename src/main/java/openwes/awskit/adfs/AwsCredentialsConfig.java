@@ -4,6 +4,7 @@ import com.amazonaws.services.securitytoken.model.Credentials;
 import org.apache.commons.configuration2.INIConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -11,6 +12,8 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class AwsCredentialsConfig {
     private INIConfiguration config;
@@ -30,12 +33,14 @@ public class AwsCredentialsConfig {
     }
 
     public void loadFile(String path) {
-        try(
-            Reader reader = new FileReader(path)
-        ) {
-            config.read(reader);
-        } catch (ConfigurationException | IOException e) {
-            throw new RuntimeException(e);
+        if (Files.exists(Paths.get(path))) {
+            try(
+                Reader reader = new FileReader(path)
+            ) {
+                config.read(reader);
+            } catch (ConfigurationException | IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -44,8 +49,17 @@ public class AwsCredentialsConfig {
     }
 
     public void saveFile(String path) {
+        File file = new File(path);
+        if (!file.exists()) {
+            try {
+                file.getParentFile().mkdirs();
+                file.createNewFile();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         try (
-            Writer writer = new FileWriter(path)
+            Writer writer = new FileWriter(file)
         ) {
             this.config.write(writer);
         } catch (IOException | ConfigurationException e) {
